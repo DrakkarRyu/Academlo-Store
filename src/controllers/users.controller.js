@@ -11,7 +11,7 @@ const { User } = require('../models/user.model');
 const { catchAsync } = require('../utils/catchAsync');
 const { AppError } = require('../utils/appError');
 
-dotenv.config({ path: './config.env' });
+dotenv.config({ path: '.../config.env' });
 
 const getAllUsers = catchAsync(async (req, res, next) => {
   const users = await User.findAll({
