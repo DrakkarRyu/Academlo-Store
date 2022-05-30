@@ -1,5 +1,6 @@
 const { catchAsync } = require('../utils/catchAsync');
 const { Product } = require('../models/product.model');
+const { AppError } = require('../utils/appError');
 
 const protectProductOwner = catchAsync(async (req, res, next) => {
   const { id } = req.params;

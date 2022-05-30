@@ -1,4 +1,6 @@
 const { Category } = require('../models/category.model');
+const { AppError } = require('../utils/appError');
+const { catchAsync } = require('../utils/catchAsync');
 
 const categoryExists = catchAsync(async (req, res, next) => {
   const { id } = req.params;
@@ -12,7 +14,7 @@ const categoryExists = catchAsync(async (req, res, next) => {
   }
 
   // Add user data to the req object
-  req.user = user;
+  req.category = category;
   next();
 });
 
