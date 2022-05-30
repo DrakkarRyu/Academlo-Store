@@ -10,7 +10,7 @@ const {
   createUserValidations,
   checkValidations,
 } = require('../middlewares/validations.middlewares');
-const { cartExist } = require('../middlewares/carts.middlewares');
+const { orderExist } = require('../middlewares/orders.middlewares');
 
 // Controller
 const {
@@ -41,7 +41,7 @@ router.get('/me', getUserProducts);
 
 router.get('/orders', getUserOrders);
 
-router.get('/orders/:id', cartExist, getUserOrderById);
+router.get('/orders/:id', orderExist, getUserOrderById);
 
 router.get('/check-token', checkToken);
 
