@@ -11,6 +11,7 @@ const Category = db.define('category', {
   name: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   status: {
     type: DataTypes.STRING,

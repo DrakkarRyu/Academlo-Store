@@ -1,12 +1,18 @@
 const { catchAsync } = require('../utils/catchAsync');
 const { Product } = require('../models/product.model');
+const { Category } = require('../models/category.model');
 
 const getAllProducts = catchAsync(async (req, res, next) => {
   const product = await Product.findAll({
     where: { status: 'active' },
+    include: [
+      {
+        model: Category,
+      },
+    ],
   });
   res.status(201).json({
-    Product,
+    product,
   });
 });
 
@@ -21,13 +27,15 @@ const getProductById = catchAsync(async (req, res, next) => {
 });
 
 const createProduct = catchAsync(async (req, res, next) => {
-  const { title, description, price, quantity } = req.body;
-
+  const { title, description, price, quantity, cate } = req.body;
+  const { sessionUser } = req;
   const newProduct = await Product.create({
     title,
     description,
     price,
     quantity,
+    categoryId,
+    userId: sessionUser.id,
   });
   res.status(201).json({
     newProduct,
