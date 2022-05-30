@@ -127,7 +127,7 @@ const getUserOrders = catchAsync(async (req, res, next) => {
   const { sessionUser } = req;
 
   const userOrders = User.findAll({
-    where: { status: 'active', id: sessionUser.id },
+    where: { status: 'purchased', id: sessionUser.id },
     include: [
       {
         model: Cart,
