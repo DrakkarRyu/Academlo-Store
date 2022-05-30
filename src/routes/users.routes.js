@@ -36,7 +36,7 @@ router.use(protectToken);
 
 router.get('/', getAllUsers);
 
-router.get('/me', protectAccountOwner, getUserProducts);
+router.get('/me', getUserProducts);
 
 router.get('/orders', getUserOrders);
 
