@@ -27,7 +27,7 @@ const getProductById = catchAsync(async (req, res, next) => {
 });
 
 const createProduct = catchAsync(async (req, res, next) => {
-  const { title, description, price, quantity, cate } = req.body;
+  const { title, description, price, quantity, categoryId } = req.body;
   const { sessionUser } = req;
   const newProduct = await Product.create({
     title,

@@ -97,7 +97,21 @@ const checkToken = catchAsync(async (req, res, next) => {
 });
 
 const getUserProducts = catchAsync(async () => {
-  res.status(200).json({ status: 'success' });
+  const userProducts = await User.findAll({
+    where: { status: 'active' },
+    attributes: { exclude: ['email', 'password', 'createdAt', 'updatedAt'] },
+    include: [
+      {
+        model: Product,
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
+    ],
+  });
+
+  res.status(200).json({
+    status: 'Success',
+    userProducts,
+  });
 });
 
 const getUserOrders = catchAsync(async () => {
