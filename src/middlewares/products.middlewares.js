@@ -2,16 +2,32 @@ const { catchAsync } = require('../utils/catchAsync');
 const { Product } = require('../models/product.model');
 const { AppError } = require('../utils/appError');
 
-const protectProductOwner = catchAsync(async (req, res, next) => {
+const productExist = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-
-  const product = await Product.findOne({ where: { id } });
+  const product = await Product.findOne({
+    where: { id, status: 'active' },
+  });
 
   if (!product) {
-    return next(new AppError('Not exist a product with that id', 404));
+    return next(new AppError('Product not found with Id', 404));
   }
+
   req.product = product;
+
   next();
 });
 
-module.exports = { protectProductOwner };
+const protectProductOwner = catchAsync(async (req, res, next) => {
+  const { sessionUser, product } = req;
+
+  if (sessionUser.id === product.id) {
+    return next(new AppError('You dont own this account', 404));
+  }
+
+  next();
+});
+
+module.exports = {
+  productExist,
+  protectProductOwner,
+};
