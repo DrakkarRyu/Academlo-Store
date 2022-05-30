@@ -15,7 +15,10 @@ const {
   createProductValidations,
   checkValidations,
 } = require('../middlewares/validations.middlewares');
-const { protectProductOwner } = require('../middlewares/products.middlewares');
+const {
+  protectProductOwner,
+  productExist,
+} = require('../middlewares/products.middlewares');
 
 const router = express.Router();
 
@@ -29,7 +32,7 @@ router.post('/', createProductValidations, checkValidations, createProduct);
 
 router
   .route('/:id')
-  .patch(protectProductOwner, updateProduct)
-  .delete(protectProductOwner, deleteProduct);
+  .patch(productExist, protectProductOwner, updateProduct)
+  .delete(productExist, protectProductOwner, deleteProduct);
 
 module.exports = { productsRouter: router };
