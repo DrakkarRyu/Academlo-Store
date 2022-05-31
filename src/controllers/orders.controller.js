@@ -15,6 +15,7 @@ const addProductToCart = catchAsync(async (req, res, next) => {
     const newCart = await Cart.create({
       userId: sessionUser.id,
     });
+    newCart;
   } else {
     const newProductInCart = await ProductInCart.create({
       include: [{ model: Product }],
@@ -23,6 +24,7 @@ const addProductToCart = catchAsync(async (req, res, next) => {
       productId,
       quantity,
     });
+    newProductInCart, res.status(200).json({ status: 'sucess' });
   }
 });
 
