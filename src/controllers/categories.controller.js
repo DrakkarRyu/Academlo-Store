@@ -1,54 +1,50 @@
-const { catchAsync } = require('../utils/catchAsync');
 const { Category } = require('../models/category.model');
+const { AppError } = require('../utils/appError');
+const { catchAsync } = require('../utils/catchAsync');
 
 const getAllCategories = catchAsync(async (req, res, next) => {
-  const category = await Category.findAll({
-    where: { status: 'active' },
-  });
-  res.status(201).json({
-    category,
-  });
-});
+  const categories = await Category.findAll({ where: { status: 'active' } });
 
-const getCategoryById = catchAsync(async (req, res, next) => {
-  const { id } = req.params;
-  const category = await Category.findOne({
-    where: { id },
-  });
-  res.status(200).json({
-    category,
-  });
+  res.status(200).json({ categories });
 });
 
 const createCategory = catchAsync(async (req, res, next) => {
   const { name } = req.body;
-  const newCategory = await Category.create({
-    name,
-  });
+
+  if (name.length === 0) {
+    return next(new AppError('Name cannot be empty', 400));
+  }
+
+  const newCategory = await Category.create({ name });
+
   res.status(201).json({
     newCategory,
   });
 });
 
 const updateCategory = catchAsync(async (req, res, next) => {
-  const { category } = req;
-  const { name } = req.body;
-  await Category.update({ name });
-  res.status(200).json({ status: 'success' });
-});
+  const { newName } = req.body;
+  const { id } = req.params;
 
-const deleteCategory = catchAsync(async (req, res, next) => {
-  const { category } = req;
-  await Category.update({ status: 'deleted' });
-  res.status(200).json({
-    status: 'success',
+  const category = await Category.findOne({
+    where: { id, status: 'active' },
   });
+
+  if (!category) {
+    return next(new AppError('Category does not exits with given id', 404));
+  }
+
+  if (newName.length === 0) {
+    return next(new AppError('The updated name cannot be empty', 400));
+  }
+
+  await category.update({ name: newName });
+
+  res.status(200).json({ status: 'success' });
 });
 
 module.exports = {
   getAllCategories,
-  getCategoryById,
   createCategory,
   updateCategory,
-  deleteCategory,
 };

@@ -2,34 +2,54 @@ const { catchAsync } = require('../utils/catchAsync');
 const { Cart } = require('../models/cart.model');
 const { ProductInCart } = require('../models/productInCart.model');
 const { Product } = require('../models/product.model');
+const { User } = require('../models/user.model');
 
 const addProductToCart = catchAsync(async (req, res, next) => {
   const { productId, quantity } = req.body;
   const { sessionUser } = req;
 
-  const cart = await Cart.findOne({
-    where: { status: 'active' },
+  const userHasCart = await Cart.findOne({
+    where: { userId: sessionUser.id, status: 'active' },
+    include: [
+      {
+        model: User,
+        attributes: { exclude: ['password'] },
+      },
+    ],
   });
-  if (!cart) {
-    const newCart = await Cart.create({
-      userId: sessionUser.id,
+
+  if (!userHasCart) {
+    const createCart = await Cart.create({ userId: sessionUser.id });
+
+    res.status(200).json({
+      status: 'Added',
+      findProduct,
+      createCart,
     });
-    res.status(201).json({
-      newCart,
+  } else {
+    const addProduct = await ProductInCart.create({
+      cartId: userHasCart.id,
+      productId,
+      quantity,
+    });
+
+    const findProduct = await ProductInCart.findAll({
+      where: { status: 'active' },
+      include: [
+        {
+          model: Product,
+          attributes: {
+            exclude: ['createdAt', 'updatedAt'],
+          },
+        },
+      ],
+    });
+
+    res.status(200).json({
+      status: 'Product added to cart',
+      findProduct,
     });
   }
-
-  const newProductInCart = await ProductInCart.create({
-    include: [{ model: Product }],
-
-    cartId: cart.id,
-    productId,
-    quantity,
-  });
-
-  res.status(201).json({
-    newProductInCart,
-  });
 });
 
 const updateProductInCart = catchAsync(async (req, res, next) => {
