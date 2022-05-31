@@ -8,46 +8,20 @@ const addProductToCart = catchAsync(async (req, res, next) => {
   const { productId, quantity } = req.body;
   const { sessionUser } = req;
 
-  const userHasCart = await Cart.findOne({
-    where: { userId: sessionUser.id, status: 'active' },
-    include: [
-      {
-        model: User,
-        attributes: { exclude: ['password'] },
-      },
-    ],
+  const cart = await Cart.findOne({
+    where: { status: 'active' },
   });
-
-  if (!userHasCart) {
-    const createCart = await Cart.create({ userId: sessionUser.id });
-
-    res.status(200).json({
-      status: 'Added',
-      findProduct,
-      createCart,
+  if (!cart) {
+    const newCart = await Cart.create({
+      userId: sessionUser.id,
     });
   } else {
-    const addProduct = await ProductInCart.create({
-      cartId: userHasCart.id,
+    const newProductInCart = await ProductInCart.create({
+      include: [{ model: Product }],
+
+      cartId: cart.id,
       productId,
       quantity,
-    });
-
-    const findProduct = await ProductInCart.findAll({
-      where: { status: 'active' },
-      include: [
-        {
-          model: Product,
-          attributes: {
-            exclude: ['createdAt', 'updatedAt'],
-          },
-        },
-      ],
-    });
-
-    res.status(200).json({
-      status: 'Product added to cart',
-      findProduct,
     });
   }
 });
