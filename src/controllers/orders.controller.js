@@ -19,12 +19,14 @@ const addProductToCart = catchAsync(async (req, res, next) => {
   const { productId, quantity } = req.body;
   const { sessionUser } = req;
 
-  // Validating that the product has enough stock for the cart
-  const product = await Product.findOne({ where: { id: productId } });
+  // Validate that the product has enough stock for the cart
+  const product = await Product.findOne({
+    where: { id: productId, status: 'active' },
+  });
 
   if (!product) {
     return next(new AppError('Invalid product', 404));
-  } else if (quantity > product.quantity) {
+  } else if (quantity < 0 || quantity > product.quantity) {
     return next(
       new AppError(
         `This product only has ${product.quantity} items available`,
@@ -33,33 +35,36 @@ const addProductToCart = catchAsync(async (req, res, next) => {
     );
   }
 
-  // Finding a current active cart, if it doesn't exist, we'll create a new one
+  // Fetch current active cart, if it doesn't exist, create a new one
   const cart = await Cart.findOne({
     where: { userId: sessionUser.id, status: 'active' },
   });
 
-  // Creating a new cart if it doesn't exist
+  // Create new cart if it doesn't exist
   if (!cart) {
     const newCart = await Cart.create({ userId: sessionUser.id });
 
-    // Adding a product to the cart
+    // Add product to the cart
     await ProductInCart.create({ cartId: newCart.id, productId, quantity });
   } else {
-    // In this point i know that the user already has a cart
-    // Validating if product already exists in the cart
+    // User already has a cart
+    // Validate if product already exists in the cart
     const productInCart = await ProductInCart.findOne({
-      where: { cartId: cart.id, productId, status: 'active' },
+      where: { cartId: cart.id, productId },
     });
 
-    // Sending an error if it exists
-    if (productInCart) {
+    // Send error if it exists
+    if (productInCart && productInCart.status === 'active') {
       return next(
         new AppError('You already have that product in your cart', 400)
       );
+    } else if (productInCart && productInCart.status === 'removed') {
+      // Put back the product in the cart (update to active)
+      await productInCart.update({ status: 'active', quantity });
+    } else if (!productInCart) {
+      // Add new product to current cart
+      await ProductInCart.create({ cartId: cart.id, productId, quantity });
     }
-
-    // Adding a  product to current cart
-    await ProductInCart.create({ cartId: cart.id, productId, quantity });
   }
 
   res.status(200).json({ status: 'success' });
