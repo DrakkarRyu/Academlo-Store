@@ -6,9 +6,11 @@ const dotenv = require('dotenv');
 
 // Models
 const { User } = require('../models/user.model');
-const { Product } = require('../models/product.model');
-const { Category } = require('../models/category.model');
+const { Order } = require('../models/order.model');
 const { Cart } = require('../models/cart.model');
+const { Product } = require('../models/product.model');
+const { ProductInCart } = require('../models/productInCart.model');
+const { Category } = require('../models/category.model');
 
 // Utils
 const { catchAsync } = require('../utils/catchAsync');
@@ -126,14 +128,30 @@ const getUserProducts = catchAsync(async (req, res, next) => {
 const getUserOrders = catchAsync(async (req, res, next) => {
   const { sessionUser } = req;
 
-  const userOrders = User.findAll({
-    where: { status: 'purchased', id: sessionUser.id },
+  const orders = await Order.findAll({
+    attributes: ['id', 'totalPrice', 'createdAt'],
+    where: { userId: sessionUser.id },
     include: [
       {
         model: Cart,
+        attributes: ['id', 'status'],
+        include: [
+          {
+            model: ProductInCart,
+            attributes: ['quantity', 'status'],
+            include: [
+              {
+                model: Product,
+                attributes: ['id', 'title', 'description', 'price'],
+                include: [{ model: Category, attributes: ['name'] }],
+              },
+            ],
+          },
+        ],
       },
     ],
   });
+
   res.status(200).json({ status: 'success', userOrders });
 });
 
