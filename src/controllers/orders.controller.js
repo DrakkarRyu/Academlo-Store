@@ -167,7 +167,7 @@ const purchaseCart = catchAsync(async (req, res, next) => {
 
 const removeProductFromCart = catchAsync(async (req, res, next) => {
   const { productInCart } = req;
-  await productInCart.update({ status: 'removed' });
+  await productInCart.update({ status: 'removed', quantity: 0 });
   res.status(200).json({
     status: 'success',
   });
