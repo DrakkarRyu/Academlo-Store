@@ -2,7 +2,7 @@ const { catchAsync } = require('../utils/catchAsync');
 const { Cart } = require('../models/cart.model');
 const { ProductInCart } = require('../models/productInCart.model');
 const { Product } = require('../models/product.model');
-const { User } = require('../models/user.model');
+const { Order } = require('../models/order.model');
 
 const getUserCart = catchAsync(async (req, res, next) => {
   const { sessionUser } = req;
@@ -110,9 +110,54 @@ const updateProductInCart = catchAsync(async (req, res, next) => {
 });
 
 const purchaseCart = catchAsync(async (req, res, next) => {
-  const { productInCart } = req;
-  await productInCart.update({ status: 'purchased' });
-  res.status(200).json({ status: 'success' });
+  const { sessionUser } = req;
+
+  // Get user's cart and get products in cart
+  const cart = await Cart.findOne({
+    where: { status: 'active', userId: sessionUser.id },
+    include: [
+      {
+        model: ProductInCart,
+        where: { status: 'active' },
+        include: [{ model: Product }],
+      },
+    ],
+  });
+
+  if (!cart) {
+    return next(new AppError('This user does not have a cart yet.', 400));
+  }
+
+  // await ProductInCart.findAll({ where: { cartId: cart.id } });
+
+  // Loop products in cart to do the following (map async)
+  let totalPrice = 0;
+
+  const cartPromises = cart.productInCarts.map(async productInCart => {
+    //  Substract to stock
+    const updatedQty = productInCart.product.quantity - productInCart.quantity;
+
+    await productInCart.product.update({ quantity: updatedQty });
+
+    //  Calculate total price
+    const productPrice = productInCart.quantity * +productInCart.product.price;
+    totalPrice += productPrice;
+
+    //  Mark products to status purchased
+    return await productInCart.update({ status: 'purchased' });
+  });
+
+  await Promise.all(cartPromises);
+
+  // Create order to user
+  const newOrder = await Order.create({
+    userId: sessionUser.id,
+    cartId: cart.id,
+    totalPrice,
+  });
+
+  await cart.update({ status: 'purchased' });
+  res.status(200).json({ status: 'success', newOrder });
 });
 
 const removeProductFromCart = catchAsync(async (req, res, next) => {
