@@ -1,4 +1,5 @@
 const { catchAsync } = require('../utils/catchAsync');
+//Models
 const { Product } = require('../models/product.model');
 const { Category } = require('../models/category.model');
 const { User } = require('../models/user.model');
